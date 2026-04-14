@@ -16,7 +16,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       Redis__ConnectionString: redis:6379,abortConnect=false
-      Redis__InstanceName: sharded-orders:
+      Redis__InstanceName: sharded-orders
       Redis__DefaultExpirationMinutes: "10"
       Sharding__Shards__0__ShardId: "0"
       Sharding__Shards__0__Name: postgres-shard-0
