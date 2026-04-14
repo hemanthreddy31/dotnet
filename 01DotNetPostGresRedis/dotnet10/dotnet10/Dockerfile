@@ -12,7 +12,9 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["dotnet10.slnx", "./"]
 COPY ["dotnet10/dotnet10.csproj", "dotnet10/"]
+COPY ["dotnet10.ServiceDefaults/dotnet10.ServiceDefaults.csproj", "dotnet10.ServiceDefaults/"]
 RUN dotnet restore "./dotnet10/dotnet10.csproj"
 COPY . .
 WORKDIR "/src/dotnet10"

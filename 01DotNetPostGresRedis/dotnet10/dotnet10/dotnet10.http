@@ -1,6 +1,23 @@
-@dotnet10_HostAddress = http://localhost:5108
+@dotnet10_HostAddress = http://localhost:8080
 
-GET {{dotnet10_HostAddress}}/weatherforecast/
+GET {{dotnet10_HostAddress}}/
+Accept: application/json
+
+###
+
+POST {{dotnet10_HostAddress}}/api/orders
+Content-Type: application/json
+
+{
+  "tenantId": 100,
+  "customerName": "Ada Lovelace",
+  "description": "Shard zero write backed by PostgreSQL and Redis.",
+  "amount": 149.99
+}
+
+###
+
+GET {{dotnet10_HostAddress}}/api/orders/shards/summary
 Accept: application/json
 
 ###

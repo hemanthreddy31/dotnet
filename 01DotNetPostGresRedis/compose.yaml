@@ -1,0 +1,100 @@
+name: dotnet10-sharded-demo
+
+services:
+  api:
+    build:
+      context: ./dotnet10
+      dockerfile: dotnet10/Dockerfile
+    depends_on:
+      postgres-shard-0:
+        condition: service_healthy
+      postgres-shard-1:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Redis__ConnectionString: redis:6379,abortConnect=false
+      Redis__InstanceName: sharded-orders:
+      Redis__DefaultExpirationMinutes: "10"
+      Sharding__Shards__0__ShardId: "0"
+      Sharding__Shards__0__Name: postgres-shard-0
+      Sharding__Shards__0__ConnectionString: Host=postgres-shard-0;Port=5432;Database=orders;Username=appuser;Password=postgrespw;Pooling=true;Include Error Detail=true
+      Sharding__Shards__1__ShardId: "1"
+      Sharding__Shards__1__Name: postgres-shard-1
+      Sharding__Shards__1__ConnectionString: Host=postgres-shard-1;Port=5432;Database=orders;Username=appuser;Password=postgrespw;Pooling=true;Include Error Detail=true
+    networks:
+      - backend
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  postgres-shard-0:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: postgrespw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - backend
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    volumes:
+      - postgres-shard-0-data:/var/lib/postgresql
+
+  postgres-shard-1:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: postgrespw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - backend
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    volumes:
+      - postgres-shard-1-data:/var/lib/postgresql
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - backend
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+networks:
+  backend:
+    name: dotnet10-sharded-demo-network
+
+volumes:
+  postgres-shard-0-data:
+    name: dotnet10-postgres-shard-0-data
+  postgres-shard-1-data:
+    name: dotnet10-postgres-shard-1-data
+  redis-data:
+    name: dotnet10-redis-data
